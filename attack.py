@@ -13,9 +13,9 @@ from environment import FederatedLearningEnvironment
 default_spoil_aggressive = {
     'attack_start_round': 2,
     'total_rounds': 15,
-    'num_sybil_per_malicious': 8,
+    'num_sybil_per_malicious': 100,
     'attack_method': 'label_flipping', 
-    'flip_ratio': 0.5,
+    'flip_ratio': 1,
     'description': 'Aggressive SPoiL attack - high flip ratio, many Sybil'
 }
 
