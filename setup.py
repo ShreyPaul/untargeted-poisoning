@@ -1,12 +1,12 @@
 """
-環境設置模組
-============
+Environment Setup Module
+=======================
 
-此模組負責：
-- 檢查系統依賴
-- 初始化實驗環境
-- 驗證配置參數
-- 準備數據集
+This module is responsible for:
+- Checking system dependencies
+- Initializing experiment environment
+- Validating configuration parameters
+- Preparing datasets
 
 Author: Security Research Team
 Date: 2024
@@ -39,69 +39,46 @@ class EnvironmentSetup:
         }
         
     def check_dependencies(self) -> Tuple[bool, List[str]]:
-        """檢查必要的依賴項"""
+        """Check required dependencies"""
         missing_modules = []
-        
-        print("🔍 檢查系統依賴...")
-        
+        print("Checking system dependencies...")
         for module in self.required_modules:
             try:
                 if module == 'torch':
                     import torch
-                    print(f"  ✅ PyTorch {torch.__version__}")
                 elif module == 'torchvision':
                     import torchvision
-                    print(f"  ✅ Torchvision {torchvision.__version__}")
                 elif module == 'numpy':
                     import numpy as np
-                    print(f"  ✅ NumPy {np.__version__}")
                 else:
                     importlib.import_module(module)
-                    print(f"  ✅ {module}")
             except ImportError:
                 missing_modules.append(module)
-                print(f"  ❌ {module} (缺失)")
-        
-        # 檢查可選模組
-        print("\n📊 檢查可選依賴...")
-        for module in self.optional_modules:
-            try:
-                importlib.import_module(module)
-                print(f"  ✅ {module}")
-            except ImportError:
-                print(f"  ⚠️ {module} (可選，用於高級可視化)")
-        
-        all_required_available = len(missing_modules) == 0
-        self.setup_status['dependencies'] = all_required_available
-        
-        return all_required_available, missing_modules
+        if missing_modules:
+            print(f"Missing required modules: {missing_modules}")
+        self.setup_status['dependencies'] = len(missing_modules) == 0
+        return len(missing_modules) == 0, missing_modules
     
     def setup_data_directory(self) -> bool:
-        """設置數據目錄"""
-        print("\n📁 設置數據目錄...")
-        
+        """Set up data directory"""
         data_dir = Path('./data')
         try:
             data_dir.mkdir(exist_ok=True)
-            print(f"  ✅ 數據目錄: {data_dir.absolute()}")
             self.setup_status['data_directory'] = True
             return True
         except Exception as e:
-            print(f"  ❌ 無法創建數據目錄: {e}")
+            print(f"Failed to create data directory: {e}")
             return False
     
     def load_config(self) -> Dict[str, Any]:
-        """加載配置"""
-        print("\n⚙️ 加載配置...")
-        
+        """Load configuration"""
         try:
             from config import AttackConfig
             config = AttackConfig()
-            print("  ✅ 配置加載成功")
             self.setup_status['config_loaded'] = True
             return config
         except ImportError:
-            print("  ⚠️ 未找到config.py，使用默認配置")
+            print("config.py not found, using default config.")
             return self._get_default_config()
     
     def _get_default_config(self) -> object:
@@ -119,84 +96,50 @@ class EnvironmentSetup:
         return DefaultConfig()
     
     def test_torch_functionality(self) -> bool:
-        """測試 PyTorch 基本功能"""
-        print("\n🧪 測試 PyTorch 功能...")
-        
+        """Test basic PyTorch functionality"""
         try:
             import torch
             import torch.nn as nn
-            
-            # 測試基本張量操作
             x = torch.randn(2, 3)
             y = torch.randn(2, 3)
             z = x + y
-            print(f"  ✅ 張量操作: {z.shape}")
-            
-            # 測試神經網絡模組
             model = nn.Linear(3, 1)
             output = model(x)
-            print(f"  ✅ 神經網絡: {output.shape}")
-            
-            # 測試 CUDA 可用性
             if torch.cuda.is_available():
-                print(f"  ✅ CUDA 可用: {torch.cuda.get_device_name()}")
-            else:
-                print("  ℹ️ CUDA 不可用，將使用 CPU")
-                
+                pass  # CUDA available, no need to print
             return True
-            
         except Exception as e:
-            print(f"  ❌ PyTorch 測試失敗: {e}")
+            print(f"PyTorch test failed: {e}")
             return False
     
     def display_system_info(self):
-        """顯示系統信息"""
-        print("\n💻 系統信息:")
-        print(f"  Python 版本: {sys.version}")
-        print(f"  操作系統: {os.name}")
-        print(f"  工作目錄: {os.getcwd()}")
-        
+        """Display system information"""
+        print(f"Python version: {sys.version.split()[0]}")
+        print(f"OS: {os.name}")
+        print(f"Working directory: {os.getcwd()}")
         try:
             import torch
-            print(f"  PyTorch 版本: {torch.__version__}")
-            print(f"  CUDA 可用: {torch.cuda.is_available()}")
-            if torch.cuda.is_available():
-                print(f"  CUDA 版本: {torch.version.cuda}")
-                print(f"  GPU 數量: {torch.cuda.device_count()}")
+            print(f"PyTorch version: {torch.__version__}")
+            print(f"CUDA available: {torch.cuda.is_available()}")
         except ImportError:
-            print("  PyTorch: 未安裝")
+            pass
     
     def run_complete_setup(self) -> Tuple[bool, object]:
-        """運行完整的環境設置"""
-        print("🚀 開始環境設置")
-        print("=" * 50)
-        
-        # 顯示系統信息
+        """Run complete environment setup"""
+        print("Starting environment setup...")
         self.display_system_info()
-        
-        # 檢查依賴項
         deps_ok, missing = self.check_dependencies()
         if not deps_ok:
-            print(f"\n❌ 缺失必要依賴: {missing}")
-            print("請安裝缺失的模組後重試")
+            print("Please install the missing modules and retry.")
             return False, None
-            
-        # 設置數據目錄
         if not self.setup_data_directory():
-            print("❌ 數據目錄設置失敗")
+            print("Data directory setup failed.")
             return False, None
-            
-        # 測試 PyTorch 功能
         if not self.test_torch_functionality():
-            print("❌ PyTorch 功能測試失敗")
+            print("PyTorch functionality test failed.")
             return False, None
-            
-        # 加載配置
         config = self.load_config()
-        
-        print("\n✅ 環境設置完成!")
-        print("=" * 50)
-        
+        print("Environment setup complete.")
         return True, config
     
     def get_setup_status(self) -> Dict[str, bool]:
@@ -209,51 +152,34 @@ def quick_setup() -> Tuple[bool, object]:
     return setup.run_complete_setup()
 
 def validate_environment() -> bool:
-    """驗證環境是否正確設置"""
+    """Validate if environment is set up correctly"""
     setup = EnvironmentSetup()
-    
-    # 檢查必要文件
     required_files = ['environment.py', 'attack.py']
     for file in required_files:
         if not Path(file).exists():
-            print(f"❌ 缺失必要文件: {file}")
+            print(f"Missing required file: {file}")
             return False
-            
-    # 檢查依賴項
     deps_ok, _ = setup.check_dependencies()
     if not deps_ok:
         return False
-        
-    # 測試導入
     try:
         from environment import FederatedLearningEnvironment
         from attack import SybilAttackOrchestrator
-        print("✅ 模組導入測試通過")
         return True
     except ImportError as e:
-        print(f"❌ 模組導入失敗: {e}")
+        print(f"Module import failed: {e}")
         return False
 
 def install_requirements():
-    """安裝依賴項指南"""
-    print("📦 依賴項安裝指南:")
-    print("=" * 40)
-    print("1. 使用 pip 安裝:")
-    print("   pip install torch torchvision numpy")
-    print("\n2. 或使用 requirements.txt:")
-    print("   pip install -r requirements.txt")
-    print("\n3. 對於 CUDA 支持:")
-    print("   請訪問 https://pytorch.org/ 獲取適合您系統的安裝命令")
-    print("=" * 40)
+    """Dependency installation guide"""
+    print("To install dependencies, run:")
+    print("  pip install -r requirements.txt")
+    print("For CUDA support, visit https://pytorch.org/ for the correct command.")
 
 if __name__ == "__main__":
-    # 如果直接運行此腳本，執行環境設置
     success, config = quick_setup()
-    
     if success:
-        print("\n🎉 環境設置成功! 您現在可以運行攻擊腳本了。")
-        print("\n使用方法:")
-        print("  python main.py")
+        print("Setup successful. You can now run the attack script with: python main.py")
     else:
-        print("\n❌ 環境設置失敗，請檢查上述錯誤信息。")
+        print("Setup failed. Please check the error messages above.")
         install_requirements() 
