@@ -43,71 +43,71 @@ class SybilVirtualDataAttackOrchestrator:
         sybil_models = []
         if len(self.environment.sybil_clients) == 0:
             return sybil_models
-        for mal_idx, malicious_client in enumerate(self.environment.sybil_clients):
-            original_data = []
-            original_labels = []
+        # --- Coordinate Sybil updates: collect all Sybil data and labels ---
+        all_sybil_data = []
+        all_sybil_labels = []
+        for malicious_client in self.environment.sybil_clients:
             for data, labels in malicious_client.data_loader:
-                original_data.append(data)
-                original_labels.append(labels)
-            if original_data:
-                all_data = torch.cat(original_data, dim=0)
-                all_labels = torch.cat(original_labels, dim=0)
-                # Flip all labels to a random incorrect class
-                flipped_labels = all_labels.clone()
-                for idx in range(len(all_labels)):
-                    original_class = all_labels[idx].item()
-                    choices = list(range(self.environment.num_classes))
-                    choices.remove(original_class)
-                    flipped_class = random.choice(choices)
-                    flipped_labels[idx] = flipped_class
-                adversarial_data = all_data.clone()
-                if torch.rand(1).item() < 0.5:
-                    noise_strength = 0.1
-                    noise = torch.randn_like(all_data) * noise_strength
-                    adversarial_data = torch.clamp(all_data + noise, 0, 1)
-                for sybil_idx in range(self.num_sybil_per_malicious):
-                    sybil_model = copy.deepcopy(global_model)
-                    sybil_model.train()
-                    optimizer = torch.optim.SGD(sybil_model.parameters(), lr=0.01, momentum=0.5)
-                    criterion = torch.nn.CrossEntropyLoss()
-                    poison_dataset = torch.utils.data.TensorDataset(adversarial_data, flipped_labels)
-                    data_loader = torch.utils.data.DataLoader(poison_dataset, batch_size=32, shuffle=True)
-                    # Adversarial training: maximize loss on validation/test set
-                    for epoch in range(3):
-                        for batch_idx, (data, target) in enumerate(data_loader):
-                            if batch_idx >= 5:
-                                break
-                            optimizer.zero_grad()
-                            output = sybil_model(data)
-                            loss = criterion(output, target)
-                            # Adversarial step: maximize loss on test set
-                            # Get a batch from the test set
-                            test_loader = self.environment.test_loader
-                            try:
-                                test_data, test_target = next(self._test_iter)
-                            except (AttributeError, StopIteration):
-                                self._test_iter = iter(test_loader)
-                                test_data, test_target = next(self._test_iter)
-                            test_output = sybil_model(test_data)
-                            test_loss = criterion(test_output, test_target)
-                            # Minimize poison loss, maximize test loss
-                            total_loss = loss - test_loss
-                            if torch.isnan(total_loss) or torch.isinf(total_loss):
-                                continue
-                            total_loss.backward()
-                            torch.nn.utils.clip_grad_norm_(sybil_model.parameters(), max_norm=1.0)
-                            optimizer.step()
-                            if epoch == 2 and batch_idx == 4:
-                                with torch.no_grad():
-                                    for param in sybil_model.parameters():
-                                        noise = torch.randn_like(param) * 0.01
-                                        param.data += noise
-                    with torch.no_grad():
-                        for param in sybil_model.parameters():
-                            if torch.isnan(param.data).any() or torch.isinf(param.data).any():
-                                param.data.copy_(global_model.state_dict()[list(global_model.state_dict().keys())[0]])
-                            param.data = torch.clamp(param.data, -10.0, 10.0)
-                    sybil_models.append(sybil_model)
+                all_sybil_data.append(data)
+                all_sybil_labels.append(labels)
+        if all_sybil_data:
+            all_data = torch.cat(all_sybil_data, dim=0)
+            all_labels = torch.cat(all_sybil_labels, dim=0)
+            # Flip all labels to a random incorrect class (shared for all Sybils)
+            flipped_labels = all_labels.clone()
+            for idx in range(len(all_labels)):
+                original_class = all_labels[idx].item()
+                choices = list(range(self.environment.num_classes))
+                choices.remove(original_class)
+                flipped_class = random.choice(choices)
+                flipped_labels[idx] = flipped_class
+            adversarial_data = all_data.clone()
+            if torch.rand(1).item() < 0.5:
+                noise_strength = 0.1
+                noise = torch.randn_like(all_data) * noise_strength
+                adversarial_data = torch.clamp(all_data + noise, 0, 1)
+            # --- Use the same adversarial_data and flipped_labels for all Sybil nodes ---
+            for sybil_idx in range(self.num_sybil_per_malicious * len(self.environment.sybil_clients)):
+                sybil_model = copy.deepcopy(global_model)
+                sybil_model.train()
+                optimizer = torch.optim.SGD(sybil_model.parameters(), lr=0.01, momentum=0.5)
+                criterion = torch.nn.CrossEntropyLoss()
+                poison_dataset = torch.utils.data.TensorDataset(adversarial_data, flipped_labels)
+                data_loader = torch.utils.data.DataLoader(poison_dataset, batch_size=32, shuffle=True)
+                # Adversarial training: maximize loss on validation/test set
+                for epoch in range(3):
+                    for batch_idx, (data, target) in enumerate(data_loader):
+                        if batch_idx >= 5:
+                            break
+                        optimizer.zero_grad()
+                        output = sybil_model(data)
+                        loss = criterion(output, target)
+                        # Adversarial step: maximize loss on test set
+                        test_loader = self.environment.test_loader
+                        try:
+                            test_data, test_target = next(self._test_iter)
+                        except (AttributeError, StopIteration):
+                            self._test_iter = iter(test_loader)
+                            test_data, test_target = next(self._test_iter)
+                        test_output = sybil_model(test_data)
+                        test_loss = criterion(test_output, test_target)
+                        total_loss = loss - test_loss
+                        if torch.isnan(total_loss) or torch.isinf(total_loss):
+                            continue
+                        total_loss.backward()
+                        torch.nn.utils.clip_grad_norm_(sybil_model.parameters(), max_norm=1.0)
+                        optimizer.step()
+                        if epoch == 2 and batch_idx == 4:
+                            with torch.no_grad():
+                                for param in sybil_model.parameters():
+                                    noise = torch.randn_like(param) * 0.01
+                                    param.data += noise
+                with torch.no_grad():
+                    for param in sybil_model.parameters():
+                        if torch.isnan(param.data).any() or torch.isinf(param.data).any():
+                            param.data.copy_(global_model.state_dict()[list(global_model.state_dict().keys())[0]])
+                        param.data = torch.clamp(param.data, -10.0, 10.0)
+                sybil_models.append(sybil_model)
         return sybil_models
 
     def execute_training_round(self):
