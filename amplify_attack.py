@@ -34,7 +34,7 @@ class SybilVirtualDataAttackOrchestrator:
         self.attack_active = False
         self.attack_start_round = 2
         self.num_sybil_per_malicious = num_sybil_per_malicious
-        self.amplification_factor = amplification_factor  # Not used, for compatibility
+        self.amplification_factor = amplification_factor
         self.virtual_datasets = {}
         self.target_model = None
         self.attack_method = 'label_flipping'
@@ -53,7 +53,7 @@ class SybilVirtualDataAttackOrchestrator:
             if original_data:
                 all_data = torch.cat(original_data, dim=0)
                 all_labels = torch.cat(original_labels, dim=0)
-                # Flip all labels to a random incorrect class
+                # Flip all labels to a random incorrect class (independent per Sybil)
                 flipped_labels = all_labels.clone()
                 for idx in range(len(all_labels)):
                     original_class = all_labels[idx].item()
@@ -82,7 +82,6 @@ class SybilVirtualDataAttackOrchestrator:
                             output = sybil_model(data)
                             loss = criterion(output, target)
                             # Adversarial step: maximize loss on test set
-                            # Get a batch from the test set
                             test_loader = self.environment.test_loader
                             try:
                                 test_data, test_target = next(self._test_iter)
@@ -91,11 +90,14 @@ class SybilVirtualDataAttackOrchestrator:
                                 test_data, test_target = next(self._test_iter)
                             test_output = sybil_model(test_data)
                             test_loss = criterion(test_output, test_target)
-                            # Minimize poison loss, maximize test loss
                             total_loss = loss - test_loss
                             if torch.isnan(total_loss) or torch.isinf(total_loss):
                                 continue
                             total_loss.backward()
+                            # Gradient sign attack: reverse the gradients
+                            for param in sybil_model.parameters():
+                                if param.grad is not None:
+                                    param.grad *= -1
                             torch.nn.utils.clip_grad_norm_(sybil_model.parameters(), max_norm=1.0)
                             optimizer.step()
                             if epoch == 2 and batch_idx == 4:
@@ -108,6 +110,9 @@ class SybilVirtualDataAttackOrchestrator:
                             if torch.isnan(param.data).any() or torch.isinf(param.data).any():
                                 param.data.copy_(global_model.state_dict()[list(global_model.state_dict().keys())[0]])
                             param.data = torch.clamp(param.data, -10.0, 10.0)
+                        # Gradient amplification: scale up Sybil model parameters
+                        for param in sybil_model.parameters():
+                            param.data *= self.amplification_factor
                     sybil_models.append(sybil_model)
         return sybil_models
 
