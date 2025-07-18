@@ -75,6 +75,13 @@ def main():
         action='store_true',
         help='Only perform environment setup check'
     )
+    parser.add_argument(
+        '--attack-module',
+        type=str,
+        default='attack',
+        choices=['attack', 'amplify_attack'],
+        help='Which attack module to use: attack (default) or amplify_attack'
+    )
     args = parser.parse_args()
     
     try:
@@ -99,7 +106,13 @@ def main():
     )
     
     try:
-        from attack import SybilVirtualDataAttackOrchestrator, ATTACK_SCENARIOS, create_attack_orchestrator
+        if args.attack_module == 'attack':
+            from attack import SybilVirtualDataAttackOrchestrator, ATTACK_SCENARIOS, create_attack_orchestrator
+        elif args.attack_module == 'amplify_attack':
+            from amplify_attack import SybilVirtualDataAttackOrchestrator, ATTACK_SCENARIOS, create_attack_orchestrator
+        else:
+            print(f"Unknown attack module: {args.attack_module}")
+            sys.exit(1)
         attack_orchestrator = create_attack_orchestrator(
             fl_env,
             num_sybil_per_malicious=args.num_sybil_per_malicious,
