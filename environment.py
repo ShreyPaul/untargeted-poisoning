@@ -1,18 +1,3 @@
-"""
-聯邦學習環境模組
-================
-
-此模組包含聯邦學習環境的基礎架構，包括：
-- 聯邦學習環境類
-- 誠實客戶端類
-- Sybil 客戶端類
-- 神經網絡模型
-- 數據集處理
-
-Author: Security Research Team
-Date: 2024
-"""
-
 import torch
 import torch.nn as nn
 import torch.optim as optim

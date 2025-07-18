@@ -1,17 +1,3 @@
-"""
-Environment Setup Module
-=======================
-
-This module is responsible for:
-- Checking system dependencies
-- Initializing experiment environment
-- Validating configuration parameters
-- Preparing datasets
-
-Author: Security Research Team
-Date: 2024
-"""
-
 import os
 import sys
 import importlib

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-SPoiL Aggressive Sybil Attack Simulation
-Main execution script for federated learning attack simulation.
+Sybil-based untargeting poisoning attack simulation
 """
 
 import argparse
@@ -15,7 +14,7 @@ def main():
         description='SPoiL Aggressive Sybil Attack Simulation',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-This script only supports the 'spoil_aggressive' scenario (label flipping, aggressive).
+        Options: --rounds, --start-round, --honest-clients, --sybil-clients, --num-sybil-per-malicious, --poison-ratio
         """
     )
     parser.add_argument(
@@ -43,10 +42,22 @@ This script only supports the 'spoil_aggressive' scenario (label flipping, aggre
         help='Number of Sybil clients (default: 3)'
     )
     parser.add_argument(
+        '--num-sybil-per-malicious',
+        type=int,
+        default=64,
+        help='Number of Sybil nodes per malicious client (default: 64)'
+    )
+    parser.add_argument(
+        '--amplification-factor',
+        type=float,
+        default=5.0,
+        help='Gradient amplification factor for Sybil models (default: 5.0)'
+    )
+    parser.add_argument(
         '--poison-ratio', 
         type=float, 
-        default=0.3,
-        help='Poison ratio (default: 0.3)'
+        default=1.0,
+        help='Poison ratio (default: 1.0)'
     )
     parser.add_argument(
         '--output', 
@@ -90,14 +101,14 @@ This script only supports the 'spoil_aggressive' scenario (label flipping, aggre
     try:
         from attack import SybilVirtualDataAttackOrchestrator, ATTACK_SCENARIOS, create_attack_orchestrator
         attack_orchestrator = create_attack_orchestrator(
-            fl_env, 
-            num_sybil_per_malicious=ATTACK_SCENARIOS['spoil_aggressive']['num_sybil_per_malicious']
+            fl_env,
+            num_sybil_per_malicious=args.num_sybil_per_malicious,
+            amplification_factor=args.amplification_factor
         )
         total_rounds = args.rounds
         start_round = args.start_round
         if not args.quiet:
             print(f"Attack config:")
-            print(f"   Scenario: spoil_aggressive ({ATTACK_SCENARIOS['spoil_aggressive']['description']})")
             print(f"   Total rounds: {total_rounds}")
             print(f"   Attack start round: {start_round}")
             print(f"   Attack method: label_flipping")
