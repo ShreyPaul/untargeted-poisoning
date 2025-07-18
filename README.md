@@ -1,28 +1,23 @@
-```markdown
 # FL Breaker  
 **Federated Learning Breaker: Sybil-Based Data Poisoning Attack Simulator**  
 
----
-
-## 📝 Description  
+## Description  
 **FL Breaker** is a simulation tool for Sybil-based untargeted data poisoning attacks in Federated Learning (FL) systems.  
 
-This project was developed for the **NUS Summer Workshop 2025 DADA Class, Group 2**, and is based on the research from the paper:
+This project was developed for the **NUS Summer Workshop 2025 DADA class**, and is based on the research from the paper:
 
-> [*"Paper Title"*](https://dl.acm.org/doi/abs/10.1007/978-3-031-39828-5_13)  
+> [*"SPoiL: Sybil-Based Untargeted Data Poisoning Attacks in Federated Learning"*](https://dl.acm.org/doi/abs/10.1007/978-3-031-39828-5_13)  
 
 It also builds upon the implementation from:  
 [YunshiuanOAO/Sybil-Based-Data-Poisoning-Attacks-in-Federated-Learning-Poc](https://github.com/YunshiuanOAO/Sybil-Based-Data-Poisoning-Attacks-in-Federated-Learning-Poc)
 
 The tool simulates how malicious actors can use Sybil clients to manipulate FL model updates through data poisoning and gradient amplification.
 
----
-
-## 🚀 Installation
+## Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/fl-breaker.git
+   git clone https://github.com/ShreyPaul/untargeted-poisoning.git
    cd fl-breaker
    ```
 
@@ -30,7 +25,6 @@ The tool simulates how malicious actors can use Sybil clients to manipulate FL m
    ```bash
    pip install -r requirements.txt
    ```
-   > *Requires Python 3.7 or higher.*
 
 ---
 
@@ -100,18 +94,3 @@ Simulation results are saved in JSON format:
   - Global model accuracy per round
   - Attack success metrics
   - Detailed logs of each training round
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**. See the `LICENSE` file for more details.
-
----
-
-## ⚠️ Disclaimer
-
-This tool is intended for **research and educational purposes only**. Do not use it for unauthorized or unethical activities. Use responsibly.
-``` 
-
-You can copy and paste this into a file named `README.md` in your GitHub repository. Let me know if you'd like to include diagrams, screenshots, or citations!
