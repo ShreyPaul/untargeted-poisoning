@@ -43,11 +43,6 @@ python main.py [OPTIONS]
   python main.py
   ```
 
-- **Custom attack with amplified gradients**:
-  ```bash
-  python main.py --attack-module amplify_attack --amplification-factor 10.0 --rounds 20
-  ```
-
 - **Check environment setup only**:
   ```bash
   python main.py --setup-only
@@ -55,7 +50,7 @@ python main.py [OPTIONS]
 
 - **Simulate large-scale Sybil attack**:
   ```bash
-  python main.py --honest-clients 10 --sybil-clients 5 --num-sybil-per-malicious 128
+  python main.py --rounds 40 --start-round 20 --honest-clients 10 --sybil-clients 1 --num-sybil-per-malicious 10
   ```
 
 ---
