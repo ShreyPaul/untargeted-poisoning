@@ -28,7 +28,7 @@ The tool simulates how malicious actors can use Sybil clients to manipulate FL m
 
 ---
 
-## 🧪 Usage
+## Usage
 
 Run the simulation with customizable parameters:
 
@@ -36,7 +36,7 @@ Run the simulation with customizable parameters:
 python main.py [OPTIONS]
 ```
 
-### 🔧 Example Commands
+### Example Commands
 
 - **Default attack simulation**:
   ```bash
@@ -55,7 +55,7 @@ python main.py [OPTIONS]
 
 ---
 
-## ⚙️ Parameters
+## Parameters
 
 | Option                    | Default       | Description |
 |---------------------------|---------------|-------------|
@@ -73,14 +73,14 @@ python main.py [OPTIONS]
 
 ---
 
-## 🧠 Attack Modules
+## Attack Modules
 
 - **`attack`**: Standard Sybil-based poisoning attack.
 - **`amplify_attack`**: Uses gradient amplification to enhance attack effectiveness (as described in the paper).
 
 ---
 
-## 📤 Output
+## Output
 
 Simulation results are saved in JSON format:
 
