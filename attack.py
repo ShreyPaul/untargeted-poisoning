@@ -24,7 +24,7 @@ ATTACK_SCENARIOS = {
 }
 
 class SybilVirtualDataAttackOrchestrator:
-    def __init__(self, environment, num_sybil_per_malicious=8, amplification_factor=5.0):
+    def __init__(self, environment, num_sybil_per_malicious=8, amplification_factor=1.0):
         self.environment = environment
         self.attack_history = []
         self.current_round = 0
@@ -177,6 +177,7 @@ class SybilVirtualDataAttackOrchestrator:
             for param in global_model.parameters():
                 if torch.isnan(param.data).any() or torch.isinf(param.data).any():
                     param.data.copy_(self.environment.global_model.state_dict()[list(self.environment.global_model.state_dict().keys())[0]])
+                param.data = torch.clamp(param.data, -5.0, 5.0)
                 if torch.rand(1).item() < 0.2:
                     scale_factor = torch.rand(1).item() * (1.2 - 0.8) + 0.8
                     param.data *= scale_factor
